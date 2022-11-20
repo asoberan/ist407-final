@@ -7,7 +7,7 @@ library(RWeka)
 
 ```{r}
 csgo_round <- read.csv("csgo_round_snapshots.csv")
-#str(csgo_round)
+glimpse(csgo_round)
 ```
 
 # Data Cleaning
