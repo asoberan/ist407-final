@@ -99,7 +99,7 @@ csgo_round <- csgo_round %>% mutate_if(is.character, as.factor)
 
 ```{r, eval=FALSE}
 model <- train(round_winner ~ .,
-               data=csgo_round %>% select(-index),
+               data=csgo_round,
                method='rpart')
 ```
 
@@ -111,7 +111,7 @@ confusionMatrix(model)
 
 ```{r, eval=FALSE}
 tree_model <- J48(round_winner ~ .,
-                  data=csgo_round %>% select(-index))
+                  data=csgo_round )
 
 plot(tree_model)
 ```
