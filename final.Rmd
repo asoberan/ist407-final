@@ -33,13 +33,57 @@ csgo_round <- csgo_round[csgo_round$round_num == 'New Round',] %>% select(!all_o
 
 # Group weapons
 
-all_grenades <- c("grenade_hegrenade", "grenade_flashbang", "grenade_smokegrenade", "grenade_incendiary_grenade", "grenade_molotovgrenade", "grenade_decoygrenade")
+all_grenades <- c("grenade_hegrenade", "grenade_flashbang", "grenade_smokegrenade", "grenade_incendiarygrenade", "grenade_molotovgrenade", "grenade_decoygrenade")
 
-all_pistols <- c("weapon_glock", "weapon_usps", "weapon_p250", "weapon_tec9", "weapon_p2000", "weapon_fiveseven", "weapon_cz75auto")
-special_pistols <- c("weapon_p250", "weapon_tec9", "weapon_fiveseven", "weapon_cz75auto")
+csgo_round$t_grenades <- rowSums(csgo_round[,paste0("t_", all_grenades)])
+csgo_round$ct_grenades <- rowSums(csgo_round[,paste0("ct_", all_grenades)])
+
+csgo_round <- csgo_round %>% select(-contains(all_grenades))
+
+all_pistols <- c("weapon_glock", "weapon_usps", "weapon_p250", "weapon_tec9", "weapon_p2000", "weapon_fiveseven", "weapon_cz75auto", "weapon_deagle", "weapon_r8revolver", "weapon_elite")
+special_pistols <- c("weapon_p250", "weapon_tec9", "weapon_fiveseven", "weapon_cz75auto", "weapon_deagle", "weapon_r8revolver", "weapon_elite")
 
 csgo_round$t_pistols <- rowSums(csgo_round[,paste0("t_", special_pistols)])
 csgo_round$ct_pistols <- rowSums(csgo_round[,paste0("ct_", special_pistols)])
+
+csgo_round <- csgo_round %>% select(-contains(all_pistols))
+
+all_shotguns <- c("weapon_nova", "weapon_xm1014", "weapon_mag7", "weapon_sawedoff")
+
+csgo_round$t_shotguns <- rowSums(csgo_round[,paste0("t_", all_shotguns)])
+csgo_round$ct_shotguns <- rowSums(csgo_round[,paste0("ct_", all_shotguns)])
+
+csgo_round <- csgo_round %>% select(-contains(all_shotguns))
+
+all_smgs <- c("weapon_mac10", "weapon_mp9", "weapon_ump45", "weapon_mp7", "weapon_bizon", "weapon_p90", "weapon_mp5sd")
+
+csgo_round$t_smgs <- rowSums(csgo_round[,paste0("t_", all_smgs)])
+csgo_round$ct_smgs <- rowSums(csgo_round[,paste0("ct_", all_smgs)])
+
+csgo_round <- csgo_round %>% select(-contains(all_smgs))
+
+all_rifles <- c("weapon_galilar", "weapon_famas", "weapon_ak47", "weapon_m4a4", "weapon_m4a1s", "weapon_sg553", "weapon_aug")
+
+csgo_round$t_rifles <- rowSums(csgo_round[,paste0("t_", all_rifles)])
+csgo_round$ct_rifles <- rowSums(csgo_round[,paste0("ct_", all_rifles)])
+
+csgo_round <- csgo_round %>% select(-contains(all_rifles))
+
+all_snipers <- c("weapon_ssg08", "weapon_awp", "weapon_g3sg1", "weapon_scar20")
+
+csgo_round$t_snipers <- rowSums(csgo_round[,paste0("t_", all_snipers)])
+csgo_round$ct_snipers <- rowSums(csgo_round[,paste0("ct_", all_snipers)])
+
+csgo_round <- csgo_round %>% select(-contains(all_snipers))
+
+all_machines <- c("weapon_m249", "weapon_negev")
+
+csgo_round$t_machines <- rowSums(csgo_round[,paste0("t_", all_machines)])
+csgo_round$ct_machines <- rowSums(csgo_round[,paste0("ct_", all_machines)])
+
+csgo_round <- csgo_round %>% select(-contains(all_machines))
+
+csgo_round <- csgo_round %>% relocate(round_winner, .after=last_col())
 
 # Write the new data to a CSV
 write.csv(csgo_round, "csgo_test.csv")
