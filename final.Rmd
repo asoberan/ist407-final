@@ -27,13 +27,19 @@ csgo_round <- csgo_round %>% mutate(round_num=case_when(time_left > lag(time_lef
 csgo_round[1,"round_num"] <- 'New Round'
 
 # Delete columns we do not need
-unwanted_cols <- c(round_num, ct_money, t_money, ct_players_alive, t_players_alive, ct_money, t_money, time_left, ct_health, t_health)
+unwanted_cols <- c("round_num", "ct_money", "t_money", "ct_players_alive", "t_players_alive", "ct_money", "t_money", "time_left", "ct_health", "t_health")
 
-csgo_round <- csgo_round[csgo_round$round_num == 'New Round',] %>% select(-unwanted_cols)
+csgo_round <- csgo_round[csgo_round$round_num == 'New Round',] %>% select(!all_of(unwanted_cols))
 
 # Group weapons
 
-grenades <- c("t_grenade_hegrenade", "t_grenade_flashbang", "t_grenade_smokegrenade", "t_grenade_incendiary_grenade", "t_grenade_molotovgrenade", "t_grenade_decoygrenade")
+all_grenades <- c("grenade_hegrenade", "grenade_flashbang", "grenade_smokegrenade", "grenade_incendiary_grenade", "grenade_molotovgrenade", "grenade_decoygrenade")
+
+all_pistols <- c("weapon_glock", "weapon_usps", "weapon_p250", "weapon_tec9", "weapon_p2000", "weapon_fiveseven", "weapon_cz75auto")
+special_pistols <- c("weapon_p250", "weapon_tec9", "weapon_fiveseven", "weapon_cz75auto")
+
+csgo_round$t_pistols <- rowSums(csgo_round[,paste0("t_", special_pistols)])
+csgo_round$ct_pistols <- rowSums(csgo_round[,paste0("ct_", special_pistols)])
 
 # Write the new data to a CSV
 write.csv(csgo_round, "csgo_test.csv")
