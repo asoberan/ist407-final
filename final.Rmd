@@ -76,5 +76,3 @@ tree_eval <- evaluate_Weka_classifier(tree_model,
 ```{r}
 print(paste('Accuracy: ', tree_eval$details['pctCorrect']))
 ```
-
-#hi
