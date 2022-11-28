@@ -86,43 +86,164 @@ csgo_round <- csgo_round %>% select(-contains(all_machines))
 csgo_round <- csgo_round %>% relocate(round_winner, .after=last_col())
 
 # Write the new data to a CSV
-write.csv(csgo_round, "csgo_test.csv")
+#write.csv(csgo_round, "csgo_test.csv")
 ```
 
 # Making all character vectors into factors
 
 ```{r}
 csgo_round <- csgo_round %>% mutate_if(is.character, as.factor)
+csgo_round<-subset(csgo_round, select = -c(ct_score, t_score))
 ```
 
-# Rpart Model
+# Downsize simple
+
+```{r}
+set.seed(9)
+csgo_round_ds<-sample_n(csgo_round,1000)
+
+```
+
+# SVM Model
 
 ```{r, eval=FALSE}
-model <- train(round_winner ~ .,
-               data=csgo_round,
-               method='rpart')
+library(kernlab)# for SVM
+library(e1071) # also for SVM
+library(randomForest)
+library(RColorBrewer)
+library(FSelector)#information.gain
+
+
+##Finding features
+info<-information.gain(round_winner~., data = csgo_round)#find the importance attributes
+info<- cbind(attributes = rownames(info), info)#make index names into a column 
+
+
+
+
+
+################################################################################
+# fit Support Vector Machine model
+```{r pressure, echo=FALSE}
+
+svmfit = svm(round_winner ~ ., data = csgo_round_ds,
+             kernel = 'linear',
+             scale = FALSE)
+
+pred.svm = predict(svmfit, newdata = csgo_round_ds)
+confusionMatrix(pred.svm, csgo_round_ds$round_winner)
+
+
+#save model
+saveRDS(svmfit, 'svmfit.rds')
+
+
+# read in saved model
+svmfit = readRDS('svmfit.rds')
+
+################################################################################
+#SVM with Linear Kernel
+
+
+search.grid = expand.grid(C = seq(0.1, 2, length = 20))
+
+# set up fold cross validation 
+train.control = trainControl(
+  method = 'repeatedcv', 
+  number = 4
+  )
+
+svm.m1 = train(round_winner ~.,
+               data = csgo_round_ds,
+               method = 'svmLinear',
+               trControl = train.control,
+               tuneGrid = search.grid)
+
+
+# results for the best model
+confusionMatrix(svm.m1)
+
+
+#save model
+saveRDS(svm.m1, 'svm.m1.rds')
+
+
+# read in saved model
+svm.m1 = readRDS('svm.m1.rds')
+
+################################################################################
+# SVM with Polynomial Kernel(not run)
+
+
+
+search.grid = expand.grid(degree = c(1, 2, 3),
+                          scale = c(0.001, 0.01, 0.1, 1.0),
+                          C = seq(0.1, 2, length = 20))
+
+train.control = trainControl(
+  method = 'repeatedcv', 
+  number = 4
+  )
+
+
+svm.m2 = train(round_winner ~.,
+                data = csgo_round_ds,
+                method = 'svmPoly',
+                trControl = train.control,
+                tuneGrid = search.grid)
+
+# results for the best model
+confusionMatrix(svm.m2)
+
+
+#save model
+saveRDS(svm.m2, 'svm.m2.rds')
+
+
+# read in saved model
+svm.m2 = readRDS('svm.m2.rds')
+
+
 ```
+
+##Random Forest
 
 ```{r}
-confusionMatrix(model)
+
+search.grid = expand.grid(.mtry = (1:5)) 
+
+rf.m1 = train(round_winner ~.,
+              data = csgo_round_ds,
+              method = 'rf',
+              metric = 'Accuracy',
+              trControl = train.control,
+              tuneGrid = search.grid)
+
+
+
+# results for the best model
+confusionMatrix(rf.m1)
+
 ```
 
-# Decision Tree Model
 
-```{r, eval=FALSE}
-tree_model <- J48(round_winner ~ .,
-                  data=csgo_round )
-
-plot(tree_model)
-```
+###k-NN algorithm
 
 ```{r}
-tree_eval <- evaluate_Weka_classifier(tree_model,
-                                      numFolds=5,
-                                      seed=9,
-                                      class=TRUE)
-```
+# odd numbers so we don't have ties
+search.grid = expand.grid(k = seq(5, 25, 2)) 
 
-```{r}
-print(paste('Accuracy: ', tree_eval$details['pctCorrect']))
-```
+# set up 3-fold cross validation 10 times
+train.control = trainControl(
+  method = 'repeatedcv', 
+  number = 3
+  )
+
+# train model
+knn = train(round_winner ~ .,
+  data = csgo_round_ds,
+  method = 'knn',
+  trControl = train.control,
+  tuneGrid = search.grid
+  )
+
