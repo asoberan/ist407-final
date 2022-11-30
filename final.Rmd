@@ -180,10 +180,10 @@ grid.arrange(t_clusters, ct_clusters)
 
 ```{r}
 View(t_kmeans$centers)
-t_strategies <- c(`1` = "Prioritize buying SMGs, occasionally buy armor and helmets", `2` = "Highly prioritize shotguns over anything else", `3` = "Camp with rifles and lots of armor and helmet", `4` = "Prioritize rifles over other weapons", `5` = "Prioritize snipers over other weapons", `6` = "N/A", `7` = "Rush other side with grenades, pistols, and lots of armor", `8` = "Camp with snipers", `9` = "Prioritize pistols over anything else")
+t_strategies <- c(`1` = "Prioritize buying SMGs, occasionally buy armor and helmets", `2` = "Highly prioritize shotguns over anything else", `3` = "Play safely by buying rifles and lots of armor and helmet", `4` = "Prioritize rifles over other weapons", `5` = "Prioritize snipers over other weapons", `6` = "Normal play (or N/A)", `7` = "Rush other side with grenades, pistols, and lots of armor", `8` = "Camp with snipers", `9` = "Prioritize pistols over anything else")
 
 View(ct_kmeans$centers)
-ct_strategies <- c(`1` = "Buy the defusing kit, armor, and rifles", `2` = "Rush with shotguns")
+ct_strategies <- c(`1` = "Buy the defusing kit, armor, and rifles", `2` = "Normal play (or N/A)")
 ```
 
 ### Assigning clusters
