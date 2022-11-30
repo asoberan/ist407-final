@@ -180,23 +180,23 @@ grid.arrange(t_clusters, ct_clusters)
 
 ```{r}
 View(t_kmeans$centers)
-t_strategies <- c("Prioritize buying SMGs, occasionally buy armor and helmets", "Highly prioritize shotguns over anything else", "Camp with rifles and lots of armor and helmet", "Prioritize rifles over other weapons", "Prioritize snipers over other weapons", "N/A", "Rush other side with grenades, pistols, and lots of armor", "Camp with snipers", "Prioritize pistols over anything else")
-names(t_strategies) <- c(1, 2, 3, 4, 5, 6, 7, 8, 9)
+t_strategies <- c(`1` = "Prioritize buying SMGs, occasionally buy armor and helmets", `2` = "Highly prioritize shotguns over anything else", `3` = "Camp with rifles and lots of armor and helmet", `4` = "Prioritize rifles over other weapons", `5` = "Prioritize snipers over other weapons", `6` = "N/A", `7` = "Rush other side with grenades, pistols, and lots of armor", `8` = "Camp with snipers", `9` = "Prioritize pistols over anything else")
 
 View(ct_kmeans$centers)
-ct_strategies <- c("Buy the defusing kit, armor, and rifles", "Rush with shotguns")
-names(t_strategies) <- c(1, 2)
+ct_strategies <- c(`1` = "Buy the defusing kit, armor, and rifles", `2` = "Rush with shotguns")
 ```
 
 ### Assigning clusters
 
 ```{r}
 t_winners <- data.frame(t_winners, t_kmeans$cluster)
-#t_winners$t_kmeans.cluster <- factor(t_winners$t_kmeans.cluster, labels=t_strategies)
+t_winners$t_strategy <- recode(t_winners$t_kmeans.cluster, !!!t_strategies)
+t_winners <- t_winners %>% select(-t_kmeans.cluster)
 head(t_winners)
 
 ct_winners <- data.frame(ct_winners, ct_kmeans$cluster)
-#ct_winners$ct_kmeans.cluster <- factor(ct_winners$ct_kmeans.cluster, labels=ct_strategies)
+ct_winners$ct_strategy <- recode(ct_winners$ct_kmeans.cluster, !!!ct_strategies)
+ct_winners <- ct_winners %>% select(-ct_kmeans.cluster)
 head(ct_winners)
 ```
 
@@ -206,7 +206,9 @@ head(ct_winners)
 csgo_round_new <- full_join(t_winners, ct_winners)
 csgo_round_new[is.na(csgo_round_new)] <- 0
 csgo_round_new <- csgo_round_new[order(csgo_round_new$index),]
-col_order <- append(colnames(csgo_round), c("t_kmeans.cluster", "ct_kmeans.cluster"))
+col_order <- append(colnames(csgo_round), c("t_strategy", "ct_strategy"))
 csgo_round_new <- csgo_round_new[,col_order]
 rownames(csgo_round_new) <- NULL
+csgo_round_new <- csgo_round_new %>% mutate_if(is.character, as.factor)
+View(csgo_round_new)
 ```
