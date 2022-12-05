@@ -8,11 +8,30 @@ library(e1071) # also for SVM
 library(randomForest)
 library(RColorBrewer)
 library(FSelector)#information.gain
+library(caret)
+
+library(RWeka)       # An R interface to Weka (Version 3.9.3). Weka is a collection of machine learning algorithms for data mining tasks written in Java, containing tools for data pre-processing, classification, regression, clustering, association rules, and visualization
+library(party)       # A computational toolbox for recursive partitioning
+library(partykit)    # A toolkit with infrastructure for representing, summarizing, and visualizing tree-structured regression and classification models.
+
+# helper packages
+library(readr)       # for data import
+library(dplyr)       # for data wrangling
+library(ggplot2)     # for awesome plotting
+
+# modeling packages
+library(rpart)       # direct engine for decision tree application
+library(caret)       # meta engine for decision tree application
+
+# model interpretations packages
+library(rpart.plot)  # for plotting decision trees
+library(vip)         # for feature importance
+library(pdp) 
 ```
 
 ```{r}
 csgo_round <- read.csv("csgo_round_snapshots.csv")
-glimpse(csgo_round)
+# glimpse(csgo_round)
 ```
 
 # Data Cleaning
@@ -128,15 +147,6 @@ rownames(ct_winners) <- NULL
 # SVM Model
 
 ```{r, eval=FALSE}
-
-
-
-##Finding features
-#info<-information.gain(round_winner~., data = csgo_round)#find the importance attributes
-#info<- cbind(attributes = rownames(info), info)#make index names into a column 
-
-
-
 ################################################################################
 # fit Support Vector Machine model
 
@@ -238,7 +248,7 @@ train.control = trainControl(
 
 
 rf.m1 = train(round_winner ~.,
-              data = csgo_round_ds,
+              data = csgo_round,
               method = 'rf',
               metric = 'Accuracy',
               trControl = train.control,
@@ -275,6 +285,123 @@ knn = train(round_winner ~ .,
 
 # results for the best model
 confusionMatrix(knn)
+
+```
+
+
+##decision tree
+```{r}
+### No feature engineering
+
+## build up a default C4.5 model
+m = J48(round_winner ~ ., data = csgo_round_ds)
+
+## use cross-validation tech to evaluate the model
+e = evaluate_Weka_classifier(m, numFolds = 5, seed = 9, class = TRUE)
+
+## show the performance
+print(paste('accuracy: ', e$details['pctCorrect']))
+
+if(require('party', quietly = TRUE)) plot(m)
+
+```
+
+
+```{r}
+##Finding features
+info<-information.gain(round_winner~., data = csgo_round)#find the importance attributes
+info<- cbind(attributes = rownames(info), info)#make index names into a column 
+myVars = c('t_armor', 't_helmets', 't_rifles', 'ct_armor', 't_grenades', 'ct_defuse_kits', 'ct_helmets','ct_rifles','ct_grenades','t_pistols','t_snipers','ct_snipers', 'round_winner')
+
+
+csgo_round_ds.new = csgo_round_ds[myVars]
+#csgo_round_ds.new = csgo_round_ds[setdiff(myVars, 'round_winner')]  #for testing no need
+
+
+## use some parameters, such as minimum number of objects in leaves and confidence factor
+m = J48(round_winner ~ ., data = csgo_round_ds.new, control = Weka_control(U = FALSE, M = 2, C = 0.5))
+
+## evaluate the results
+e = evaluate_Weka_classifier(m, numFolds = 5, seed = 9, class = TRUE)
+
+print(paste('accuracy: ', e$details['pctCorrect']))
+
+if(require('party', quietly = TRUE)) plot(m)
+
+```
+
+
+
+
+
+
+```{r}
+##tuning parameters tree 
+
+C.values = c(0.01,0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.5)
+M.values = c(2,3,4,5,6,7,8,9,10)
+
+## variable to record the best model
+best.performance = 0.0
+best.c = 0.0
+best.m = 0.0
+
+for (i in 1:length(C.values)) {
+  
+  for (j in 1:length(M.values)) {
+    
+    c.value = C.values[i]
+    
+    m.value = M.values[j]
+    
+    m = J48(round_winner ~ ., data = csgo_round_ds, 
+             control = Weka_control(U = FALSE, C = c.value, M = m.value))
+  
+    e = evaluate_Weka_classifier(m,
+                                 cost = matrix(c(0,1,1,0), ncol = 2),
+                                 numFolds = 5, complexity = TRUE,
+                                 seed = 9, class = TRUE)
+
+    if (e$details['pctCorrect'] > best.performance) {
+      best.performance = e$details['pctCorrect']
+      
+      best.c = c.value
+      best.m = m.value
+    }
+    
+  }
+    
+}
+
+print(paste('best accuracy: ', best.performance))
+print(paste('best m: ', best.m))
+print(paste('best c: ', best.c))
+```
+
+
+```{r}
+
+grid = expand.grid(.M=c(2,3,4,5,6,7,8,9,10), 
+                   .C=c(0.01,0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50))
+
+# fit the model
+csgo.tree = train(round_winner ~ ., 
+                  data=csgo_round_ds, 
+                  method='J48',
+                  trControl = trainControl(method = 'cv',number = 10),
+                  tuneGrid = grid)
+
+plot(csgo.tree$finalModel, uniform=TRUE,
+     main='Classification Tree')
+
+
+```
+
+
+
+```{r}
+fit <- rpart(round_winner~., data = csgo_round_ds, method = 'class')
+rpart.plot(fit, extra = 106)
 
 ```
 
