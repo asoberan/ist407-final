@@ -248,7 +248,7 @@ train.control = trainControl(
 
 
 rf.m1 = train(round_winner ~.,
-              data = csgo_round,
+              data = csgo_round_ds,
               method = 'rf',
               metric = 'Accuracy',
               trControl = train.control,
@@ -394,6 +394,8 @@ csgo.tree = train(round_winner ~ .,
 plot(csgo.tree$finalModel, uniform=TRUE,
      main='Classification Tree')
 
+confusionMatrix(csgo.tree)
+
 
 ```
 
@@ -403,6 +405,13 @@ plot(csgo.tree$finalModel, uniform=TRUE,
 fit <- rpart(round_winner~., data = csgo_round_ds, method = 'class')
 rpart.plot(fit, extra = 106)
 
+
+t_pred = predict(fit,csgo_round,type="class")
+t = csgo_round['round_winner']
+confMat <- table(csgo_round$round_winner,t_pred)
+
+accuracy <- sum(diag(confMat))/sum(confMat)
+accuracy
 ```
 
 
